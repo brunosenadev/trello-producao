@@ -21,7 +21,13 @@ import {
 import { centsToBRL } from "@/lib/money";
 import { formatDateTimeShort } from "@/lib/timezone";
 
-export function OccurrenceDetail({ occurrence }: { occurrence: Occurrence }) {
+export function OccurrenceDetail({
+  occurrence,
+  onCompleted,
+}: {
+  occurrence: Occurrence;
+  onCompleted?: () => void;
+}) {
   const [items, setItems] = useState(occurrence.checklistItems);
   const [isPending, startTransition] = useTransition();
   const [isSavingInfo, setIsSavingInfo] = useState(false);
@@ -42,6 +48,7 @@ export function OccurrenceDetail({ occurrence }: { occurrence: Occurrence }) {
         return;
       }
       toast.success("Tarefa concluída! Valor lançado no financeiro.");
+      onCompleted?.();
     });
   }
 

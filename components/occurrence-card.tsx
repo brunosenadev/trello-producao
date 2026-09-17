@@ -9,7 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { centsToBRL } from "@/lib/money";
-import { occurrenceDisplayTitle, type getOccurrencesForDate } from "@/lib/occurrences";
+import { occurrenceDisplayTitle } from "@/lib/occurrence-display";
+import type { getOccurrencesForDate } from "@/lib/occurrences";
 
 export type Occurrence = Awaited<ReturnType<typeof getOccurrencesForDate>>[number];
 
@@ -71,7 +72,7 @@ export function OccurrenceCard({ occurrence }: { occurrence: Occurrence }) {
           <SheetHeader>
             <SheetTitle>{occurrenceDisplayTitle(occurrence)}</SheetTitle>
           </SheetHeader>
-          <OccurrenceDetail occurrence={occurrence} />
+          <OccurrenceDetail occurrence={occurrence} onCompleted={() => setOpen(false)} />
         </SheetContent>
       </Sheet>
     </>

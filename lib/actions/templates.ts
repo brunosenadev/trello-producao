@@ -7,6 +7,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { taskChecklistTemplates, taskTemplates } from "@/lib/db/schema";
 import { brlToCents } from "@/lib/money";
+import { getProjectTemplates } from "@/lib/queries/projects";
 import { requireUser } from "@/lib/session";
 
 const templateSchema = z.object({
@@ -122,6 +123,60 @@ export async function setTemplateActive(templateId: string, projectId: string, i
   await db.update(taskTemplates).set({ isActive }).where(eq(taskTemplates.id, templateId));
   revalidatePath(`/projects/${projectId}/settings`);
   revalidatePath(`/projects/${projectId}`);
+}
+
+export async function fetchTemplatesForCopy(projectId: string) {
+  await requireUser();
+  return getProjectTemplates(projectId);
+}
+
+export async function copyTaskTemplates(
+  targetProjectId: string,
+  sourceProjectId: string,
+  templateIds: string[],
+) {
+  await requireUser();
+  if (templateIds.length === 0) return;
+
+  const sourceTemplates = await db.query.taskTemplates.findMany({
+    where: (t, { and, eq, inArray }) =>
+      and(eq(t.projectId, sourceProjectId), inArray(t.id, templateIds)),
+    with: { checklistTemplates: { orderBy: (i, { asc }) => [asc(i.order)] } },
+  });
+
+  const [maxOrderRow] = await db
+    .select({ max: sql<number>`coalesce(max(${taskTemplates.order}), -1)` })
+    .from(taskTemplates)
+    .where(eq(taskTemplates.projectId, targetProjectId));
+  let nextOrder = (maxOrderRow?.max ?? -1) + 1;
+
+  for (const source of sourceTemplates) {
+    const [copy] = await db
+      .insert(taskTemplates)
+      .values({
+        projectId: targetProjectId,
+        title: source.title,
+        amountCents: source.amountCents,
+        frequency: source.frequency,
+        weekDays: source.weekDays,
+        isActive: source.isActive,
+        order: nextOrder++,
+      })
+      .returning();
+
+    if (source.checklistTemplates.length > 0) {
+      await db.insert(taskChecklistTemplates).values(
+        source.checklistTemplates.map((c) => ({
+          taskTemplateId: copy.id,
+          label: c.label,
+          order: c.order,
+        })),
+      );
+    }
+  }
+
+  revalidatePath(`/projects/${targetProjectId}/settings`);
+  revalidatePath(`/projects/${targetProjectId}`);
 }
 
 export async function moveTemplate(

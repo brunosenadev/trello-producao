@@ -60,7 +60,7 @@ export default async function DashboardPage() {
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard label="Gerado no mês" value={centsToBRL(monthGeneratedCents)} />
         <StatCard
-          label={balanceCents >= 0 ? "Seu saldo de adiantamento" : "Valor a receber"}
+          label={balanceCents >= 0 ? "Saldo de adiantamento" : "Valor a receber"}
           value={centsToBRL(Math.abs(balanceCents))}
         />
         <StatCard

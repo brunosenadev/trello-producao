@@ -87,13 +87,7 @@ export async function ensureOccurrencesForDate(projectId: string, date: DateOnly
   return getOccurrencesForDate(projectId, date);
 }
 
-/** Título específico do vídeo, ou o nome do tipo de demanda enquanto não preenchido. */
-export function occurrenceDisplayTitle(occurrence: {
-  title: string | null;
-  taskTemplate: { title: string };
-}): string {
-  return occurrence.title || occurrence.taskTemplate.title;
-}
+export { occurrenceDisplayTitle } from "@/lib/occurrence-display";
 
 export async function getOccurrencesForDate(projectId: string, date: DateOnly) {
   const occurrences = await db.query.taskOccurrences.findMany({
